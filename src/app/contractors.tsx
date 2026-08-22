@@ -5,8 +5,9 @@ import {
   View, 
   FlatList, 
   TouchableOpacity, 
-  TextInput, 
-  SafeAreaView 
+  TextInput,
+  SafeAreaView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -131,7 +132,7 @@ export default function ContractorsScreen() {
 
             <TouchableOpacity 
               style={styles.hireButton}
-              onPress={() => alert(Contacting ${item.name}...)}
+              onPress={() => Alert.alert('Quote request', `Contacting ${item.name}...`)}
             >
               <Text style={styles.hireButtonText}>Request Quote</Text>
             </TouchableOpacity>

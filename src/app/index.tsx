@@ -1,12 +1,10 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 export default function HomeScreen() {
   const router = useRouter(); // <--
   return (
-    // Your UI code...
-  );
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
@@ -42,7 +40,9 @@ export default function HomeScreen() {
         {/* Featured Contractors Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Featured Contractors</Text>
-          <TouchableOpacity><Text style={styles.seeAllText}>See All</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/contractors')}>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
@@ -70,7 +70,9 @@ export default function HomeScreen() {
         {/* Featured Properties Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Featured Properties</Text>
-          <TouchableOpacity><Text style={styles.seeAllText}>See All</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/explore')}>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>

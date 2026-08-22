@@ -5,8 +5,9 @@ import {
   View, 
   FlatList, 
   TouchableOpacity, 
-  TextInput, 
-  SafeAreaView 
+  TextInput,
+  SafeAreaView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -139,7 +140,7 @@ export default function ExploreScreen() {
 
             <TouchableOpacity 
               style={styles.actionButton}
-              onPress={() => alert(Inquiry submitted for: ${item.title})}
+              onPress={() => Alert.alert('Listing inquiry', `Inquiry submitted for: ${item.title}`)}
             >
               <Text style={styles.actionButtonText}>View Listing Details</Text>
             </TouchableOpacity>
