@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { getApprovedAdminStatus } from '@/lib/admin-contractors';
 import {
   StyleSheet,
   Text,
@@ -13,10 +12,8 @@ import { supabase } from '@/lib/supabase';
 export default function HomeScreen() {
   const router = useRouter();
   const [contractorInboxVisible, setContractorInboxVisible] = useState(false);
-const [isAdmin, setIsAdmin] = useState(false);
-useEffect(() => {
-  
 
+useEffect(() => {
   let active = true;
 
   const loadContractorAccess = async () => {
@@ -42,24 +39,6 @@ useEffect(() => {
 
   return () => {
     active = false;
-  };
-}, []);
-useEffect(() => {
-  let mounted = true;
-
-  const loadAdminStatus = async () => {
-    try {
-      const approved = await getApprovedAdminStatus();
-      if (mounted) setIsAdmin(approved);
-    } catch {
-      if (mounted) setIsAdmin(false);
-    }
-  };
-
-  void loadAdminStatus();
-
-  return () => {
-    mounted = false;
   };
 }, []);
 const handleSignOut = async () => {
@@ -98,15 +77,6 @@ const handleSignOut = async () => {
             <Text style={styles.cardTitle}>Buy & Sell</Text>
           </TouchableOpacity>
         </View>
-        {isAdmin ? (
-  <TouchableOpacity
-    style={styles.adminButton}
-    onPress={() => router.push('/admin-contractors')}
-  >
-    <Text style={styles.adminButtonText}>Admin Catalog</Text>
-  </TouchableOpacity>
-) : null}
-
 
         <TouchableOpacity
           style={styles.requestsButton}
@@ -120,7 +90,6 @@ const handleSignOut = async () => {
 {contractorInboxVisible ? (
   <TouchableOpacity
     style={styles.contractorInboxButton}
-
     onPress={() => router.push('/contractor-requests')}
   >
     <Text style={styles.contractorInboxButtonTitle}>Contractor Inbox</Text>
@@ -210,20 +179,6 @@ const handleSignOut = async () => {
 }
 
 const styles = StyleSheet.create({
-  adminButton: {
-  backgroundColor: '#7C3AED',
-  borderRadius: 12,
-  marginBottom: 12,
-  paddingHorizontal: 16,
-  paddingVertical: 14,
-},
-adminButtonText: {
-  color: '#FFFFFF',
-  fontSize: 16,
-  fontWeight: '700',
-  textAlign: 'center',
-},
-
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',

@@ -1,73 +1,84 @@
-import React, { useState } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  FlatList, 
-  TouchableOpacity, 
-  TextInput, 
-  SafeAreaView 
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-// Mock Data for Construction Companies
-const CONTRACTORS = [
-  {
-    id: '1',
-    name: 'Apex Framing & Carpentry',
-    specialty: 'Framing',
-    rating: 4.9,
-    reviews: 124,
-    rate: '$55/hr',
-    completedProjects: 82,
-  },
-  {
-    id: '2',
-    name: 'Solid Ground Foundation Co.',
-    specialty: 'Concrete',
-    rating: 4.7,
-    reviews: 98,
-    rate: '$75/hr',
-    completedProjects: 140,
-  },
-  {
-    id: '3',
-    name: 'Elite Plumbing & Piping',
-    specialty: 'Plumbing',
-    rating: 4.8,
-    reviews: 156,
-    rate: '$60/hr',
-    completedProjects: 210,
-  },
-  {
-    id: '4',
-    name: 'Volt Masters Electrical',
-    specialty: 'Electrical',
-    rating: 4.9,
-    reviews: 88,
-    rate: '$65/hr',
-    completedProjects: 75,
-  },
-];
-
-const CATEGORIES = ['All', 'Framing', 'Concrete', 'Plumbing', 'Electrical'];
+import {
+  getPublishedContractors,
+  type Contractor,
+} from '@/lib/contractors';
 
 export default function ContractorsScreen() {
   const router = useRouter();
+  const [contractors, setContractors] = useState<Contractor[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  // Filter logic
-  const filteredContractors = CONTRACTORS.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.specialty.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || item.specialty === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const loadContractors = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage('');
+
+    try {
+      const publishedContractors = await getPublishedContractors();
+      setContractors(publishedContractors);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to load contractors right now.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadContractors();
+  }, [loadContractors]);
+
+  const categories = useMemo(
+    () => ['All', ...Array.from(new Set(contractors.map((item) => item.specialty)))],
+    [contractors],
+  );
+
+  const filteredContractors = useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+
+    return contractors.filter((item) => {
+      const matchesSearch =
+        item.name.toLowerCase().includes(normalizedSearch) ||
+        item.specialty.toLowerCase().includes(normalizedSearch) ||
+        item.description.toLowerCase().includes(normalizedSearch);
+      const matchesCategory =
+        selectedCategory === 'All' || item.specialty === selectedCategory;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [contractors, searchQuery, selectedCategory]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centeredContent}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading contractors...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backButtonText}>← Back</Text>
@@ -75,7 +86,6 @@ export default function ContractorsScreen() {
         <Text style={styles.headerTitle}>Find Contractors</Text>
       </View>
 
-      {/* Search Bar */}
       <TextInput
         style={styles.searchBar}
         placeholder="Search contractors or specialties..."
@@ -84,62 +94,84 @@ export default function ContractorsScreen() {
         onChangeText={setSearchQuery}
       />
 
-      {/* Category Filter Badges */}
-      <View style={styles.categoryContainer}>
-        <FlatList
-          data={CATEGORIES}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item}
-          renderItem={({ item }) => (
-            <TouchableOpacity
+      <FlatList
+        data={categories}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item}
+        contentContainerStyle={styles.categoryContainer}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[
+              styles.categoryBadge,
+              selectedCategory === item && styles.categoryBadgeActive,
+            ]}
+            onPress={() => setSelectedCategory(item)}
+          >
+            <Text
               style={[
-                styles.categoryBadge,
-                selectedCategory === item && styles.categoryBadgeActive
-              ]}
-              onPress={() => setSelectedCategory(item)}
-            >
-              <Text style={[
                 styles.categoryText,
-                selectedCategory === item && styles.categoryTextActive
-              ]}>
-                {item}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
+                selectedCategory === item && styles.categoryTextActive,
+              ]}
+            >
+              {item}
+            </Text>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={null}
+      />
 
-      {/* Contractor List */}
+      {errorMessage ? (
+        <View style={styles.errorCard}>
+          <Text style={styles.errorTitle}>Contractors unavailable</Text>
+          <Text style={styles.errorMessage}>{errorMessage}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadContractors}>
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       <FlatList
         data={filteredContractors}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            {errorMessage
+              ? ''
+              : 'No published contractors match your search.'}
+          </Text>
+        }
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.contractorName}>{item.name}</Text>
-              <Text style={styles.ratingText}>⭐ {item.rating}</Text>
-            </View>
-            
-            <Text style={styles.specialtyText}>{item.specialty}</Text>
-            
-            <View style={styles.detailsRow}>
-              <Text style={styles.detailItem}>💼 {item.completedProjects} Jobs</Text>
-              <Text style={styles.detailItem}>💵 {item.rate}</Text>
+              <Text style={styles.ratingText}>★ {item.rating.toFixed(1)}</Text>
             </View>
 
-            <TouchableOpacity 
-              style={styles.hireButton}
-              onPress={() => alert(Contacting ${item.name}...)}
+            <Text style={styles.specialtyText}>{item.specialty}</Text>
+            <Text style={styles.descriptionText}>{item.description}</Text>
+
+            <View style={styles.detailsRow}>
+              <Text style={styles.detailItem}>
+                {item.completedProjects} completed projects
+              </Text>
+              <Text style={styles.detailItem}>{item.rate}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() =>
+                router.push({
+                  pathname: '/contractor/[id]',
+                  params: { id: item.external_id },
+                })
+              }
             >
-              <Text style={styles.hireButtonText}>Request Quote</Text>
+              <Text style={styles.profileButtonText}>View Profile</Text>
             </TouchableOpacity>
           </View>
         )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No contractors found matching your search.</Text>
-        }
       />
     </SafeAreaView>
   );
@@ -150,11 +182,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
+  centeredContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    color: '#6B7280',
+    fontSize: 16,
+    marginTop: 12,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
   },
@@ -172,7 +215,7 @@ const styles = StyleSheet.create({
     color: '#212529',
   },
   searchBar: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 8,
@@ -182,8 +225,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   categoryContainer: {
-    paddingLeft: 16,
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
   categoryBadge: {
     paddingHorizontal: 16,
@@ -200,21 +243,19 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   categoryTextActive: {
-    color: '#FFF',
+    color: '#FFFFFF',
   },
   listContainer: {
     padding: 16,
+    paddingTop: 8,
   },
   card: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -223,19 +264,27 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   contractorName: {
+    flex: 1,
     fontSize: 18,
     fontWeight: 'bold',
     color: '#212529',
+    marginRight: 12,
   },
   ratingText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFD700',
+    color: '#B7791F',
   },
   specialtyText: {
     fontSize: 14,
     color: '#6C757D',
     fontWeight: '500',
+    marginBottom: 8,
+  },
+  descriptionText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#495057',
     marginBottom: 12,
   },
   detailsRow: {
@@ -247,15 +296,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#495057',
   },
-  hireButton: {
+  profileButton: {
     backgroundColor: '#007AFF',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
-  hireButtonText: {
-    color: '#FFF',
+  profileButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  errorCard: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  errorTitle: {
+    color: '#991B1B',
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
+  errorMessage: {
+    color: '#B91C1C',
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  retryButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#B91C1C',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    marginTop: 12,
+  },
+  retryButtonText: {
+    color: '#B91C1C',
     fontWeight: '600',
   },
   emptyText: {

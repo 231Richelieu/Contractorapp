@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  FlatList, 
-  TouchableOpacity, 
-  TextInput, 
-  SafeAreaView 
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 
-// Mock Data for Real Estate Listings
+// Temporary local data. We will replace this with real data later.
 const PROPERTIES = [
   {
     id: '1',
@@ -57,25 +57,26 @@ export default function ExploreScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
 
-  // Filter listings matching parameters
-  const filteredProperties = PROPERTIES.filter(property => {
-    const matchesSearch = property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          property.location.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = selectedFilter === 'All' || property.type === selectedFilter;
+  const filteredProperties = PROPERTIES.filter((property) => {
+    const normalizedSearch = searchQuery.toLowerCase();
+    const matchesSearch =
+      property.title.toLowerCase().includes(normalizedSearch) ||
+      property.location.toLowerCase().includes(normalizedSearch);
+    const matchesFilter =
+      selectedFilter === 'All' || property.type === selectedFilter;
+
     return matchesSearch && matchesFilter;
   });
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Property Marketplace</Text>
       </View>
 
-      {/* Search Input bar */}
       <TextInput
         style={styles.searchBar}
         placeholder="Search by location or property type..."
@@ -84,7 +85,6 @@ export default function ExploreScreen() {
         onChangeText={setSearchQuery}
       />
 
-      {/* Horizontal Filter Row */}
       <View style={styles.filterContainer}>
         <FlatList
           data={FILTERS}
@@ -95,14 +95,16 @@ export default function ExploreScreen() {
             <TouchableOpacity
               style={[
                 styles.filterBadge,
-                selectedFilter === item && styles.filterBadgeActive
+                selectedFilter === item && styles.filterBadgeActive,
               ]}
               onPress={() => setSelectedFilter(item)}
             >
-              <Text style={[
-                styles.filterText,
-                selectedFilter === item && styles.filterTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedFilter === item && styles.filterTextActive,
+                ]}
+              >
                 {item}
               </Text>
             </TouchableOpacity>
@@ -110,7 +112,6 @@ export default function ExploreScreen() {
         />
       </View>
 
-      {/* Grid List of Properties */}
       <FlatList
         data={filteredProperties}
         keyExtractor={(item) => item.id}
@@ -118,35 +119,41 @@ export default function ExploreScreen() {
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.statusRow}>
-              <View style={[
-                styles.statusBadge, 
-                item.status === 'For Sale' ? styles.saleBadge : styles.rentBadge
-              ]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  item.status === 'For Sale'
+                    ? styles.saleBadge
+                    : styles.rentBadge,
+                ]}
+              >
                 <Text style={styles.statusText}>{item.status}</Text>
               </View>
               <Text style={styles.priceText}>{item.price}</Text>
             </View>
 
             <Text style={styles.propertyTitle}>{item.title}</Text>
-            <Text style={styles.locationText}>📍 {item.location}</Text>
-            
+            <Text style={styles.locationText}>{item.location}</Text>
+
             <View style={styles.divider} />
-            
+
             <View style={styles.specsRow}>
-              <Text style={styles.specsText}>📐 Size: {item.size}</Text>
-              <Text style={styles.specsText}>🏷️ Type: {item.type}</Text>
+              <Text style={styles.specsText}>Size: {item.size}</Text>
+              <Text style={styles.specsText}>Type: {item.type}</Text>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => alert(Inquiry submitted for: ${item.title})}
+              onPress={() => alert(`Inquiry submitted for: ${item.title}`)}
             >
               <Text style={styles.actionButtonText}>View Listing Details</Text>
             </TouchableOpacity>
           </View>
         )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No listings match your current filters.</Text>
+          <Text style={styles.emptyText}>
+            No listings match your current filters.
+          </Text>
         }
       />
     </SafeAreaView>
@@ -293,3 +300,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
