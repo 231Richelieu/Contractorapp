@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
   getPublishedContractors,
@@ -18,11 +18,15 @@ import {
 
 export default function ContractorsScreen() {
   const router = useRouter();
+  const { q } = useLocalSearchParams<{ q?: string }>();
   const [contractors, setContractors] = useState<Contractor[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(q ?? '');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  useEffect(() => {
+    setSearchQuery(q ?? '');
+  }, [q]);
 
   const loadContractors = useCallback(async () => {
     setLoading(true);
@@ -133,7 +137,7 @@ export default function ContractorsScreen() {
 
       <FlatList
         data={filteredContractors}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.external_id}
         contentContainerStyle={styles.listContainer}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
