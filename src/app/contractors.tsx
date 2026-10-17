@@ -10,9 +10,10 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import type { Contractor } from '@/types/marketplace';
 
 // Mock Data for Construction Companies
-const CONTRACTORS = [
+const CONTRACTORS: Contractor[] = [
   {
     id: '1',
     name: 'Apex Framing & Carpentry',

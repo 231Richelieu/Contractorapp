@@ -10,9 +10,10 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import type { Property } from '@/types/marketplace';
 
 // Mock Data for Real Estate Listings
-const PROPERTIES = [
+const PROPERTIES: Property[] = [
   {
     id: '1',
     title: 'Commercial Development Land',
